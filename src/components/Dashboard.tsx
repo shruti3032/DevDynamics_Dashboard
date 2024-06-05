@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchData } from '../services/api';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from 'recharts';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -17,10 +17,9 @@ const ChartContainer = styled.div`
 const FilterContainer = styled.div`
     display: flex;
     justify-content: center;
-    align-items: center;
     margin-bottom: 20px;
 
-    input, select {
+    select {
         margin: 0 10px;
         padding: 5px;
     }
@@ -29,7 +28,6 @@ const FilterContainer = styled.div`
 const Dashboard: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
     const [selectedUser, setSelectedUser] = useState<string>('');
-    const [searchQuery, setSearchQuery] = useState<string>('');
     const [filter, setFilter] = useState<string>('all');
 
     useEffect(() => {
@@ -46,14 +44,6 @@ const Dashboard: React.FC = () => {
 
     const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedUser(e.target.value);
-    };
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-        const user = data.find(user => user.name.toLowerCase().includes(e.target.value.toLowerCase()));
-        if (user) {
-            setSelectedUser(user.name);
-        }
     };
 
     const filteredData = data
@@ -74,13 +64,6 @@ const Dashboard: React.FC = () => {
         <Container>
             <h1>Developer Activity Dashboard</h1>
             <FilterContainer>
-                <label>Search user: </label>
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    placeholder="Enter user email"
-                />
                 <label>Select user: </label>
                 <select value={selectedUser} onChange={handleUserChange}>
                     {uniqueUsers.map(user => (
