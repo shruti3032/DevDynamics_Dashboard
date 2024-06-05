@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { fetchData } from '../services/api';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -17,9 +17,10 @@ const ChartContainer = styled.div`
 const FilterContainer = styled.div`
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-bottom: 20px;
 
-    select {
+    input, select {
         margin: 0 10px;
         padding: 5px;
     }
@@ -27,31 +28,67 @@ const FilterContainer = styled.div`
 
 const Dashboard: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
+    const [selectedUser, setSelectedUser] = useState<string>('');
+    const [searchQuery, setSearchQuery] = useState<string>('');
     const [filter, setFilter] = useState<string>('all');
 
     useEffect(() => {
         const getData = async () => {
             const result = await fetchData();
             setData(result.AuthorWorklog.rows);
+            if (result.AuthorWorklog.rows.length > 0) {
+                setSelectedUser(result.AuthorWorklog.rows[0].name);
+            }
         };
 
         getData();
     }, []);
 
-    const filteredData = data.flatMap(user =>
-        user.dayWiseActivity.map((day: any) => ({
-            date: day.date,
-            ...day.items.children.reduce((acc: any, item: any) => {
-                acc[item.label] = Number(item.count);
-                return acc;
-            }, {}),
-        }))
-    );
+    const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedUser(e.target.value);
+    };
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(e.target.value);
+        const user = data.find(user => user.name.toLowerCase().includes(e.target.value.toLowerCase()));
+        if (user) {
+            setSelectedUser(user.name);
+        }
+    };
+
+    const filteredData = data
+        .filter(user => user.name === selectedUser)
+        .flatMap(user =>
+            user.dayWiseActivity.map((day: any) => ({
+                date: day.date,
+                ...day.items.children.reduce((acc: any, item: any) => {
+                    acc[item.label] = Number(item.count);
+                    return acc;
+                }, {}),
+            }))
+        );
+
+    const uniqueUsers = Array.from(new Set(data.map(user => user.name)));
 
     return (
         <Container>
             <h1>Developer Activity Dashboard</h1>
             <FilterContainer>
+                <label>Search user: </label>
+                <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Enter user email"
+                />
+                <label>Select user: </label>
+                <select value={selectedUser} onChange={handleUserChange}>
+                    {uniqueUsers.map(user => (
+                        <option key={user} value={user}>
+                            {user}
+                        </option>
+                    ))}
+                </select>
                 <label>Filter by activity: </label>
                 <select value={filter} onChange={(e) => setFilter(e.target.value)}>
                     <option value="all">All</option>
